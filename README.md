@@ -9,10 +9,14 @@ Dynamic DNS records updater implemented via Cloudflare API.
 
 ## Install
 
+### Binary
+
+Download from [releases](https://github.com/jellyterra/cloudflare-ddns/releases).
+
 ### Install via Go mod
 
 ```shell
-$ go install github.com/jellyterra/cloudflare-ddns@latest
+$ go install github.com/jellyterra/cloudflare-ddns/cmd/cloudflare-ddns@latest
 ```
 
 ## Setup
