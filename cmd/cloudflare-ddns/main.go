@@ -9,7 +9,9 @@ import (
 	"github.com/jellyterra/cloudflare-ddns/ddns"
 	"log"
 	"os"
+	"sync/atomic"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -44,29 +46,37 @@ func _main() error {
 		return err
 	}
 
-	notification := make(chan struct{}, 1)
+	var (
+		haveToUpdate atomic.Bool
+		notification = make(chan struct{}, 1)
+	)
 
 	go func() {
 		for {
-			err := func() error {
-				report, err := env.UpdateAllZones(context.Background())
-				if err != nil {
-					return err
-				}
+			// To keep the result latest, it must be set before the update.
+			haveToUpdate.Store(false)
 
-				printEnvReport(report)
+			report, err := env.UpdateAllZones(context.Background())
 
-				log.Println("All zones updated.")
-
-				return nil
-			}()
 			if err != nil {
 				log.Println("Error updating DNS records:", err)
 			}
 
+			printEnvReport(report)
+			log.Println("All zones updated.")
+
+			for !haveToUpdate.Load() {
+				time.Sleep(1 * time.Second)
+			}
+		}
+	}()
+
+	go func() {
+		for {
 			select {
 			case <-notification:
 				log.Println("Network change detected.")
+				haveToUpdate.Store(true)
 			}
 		}
 	}()
