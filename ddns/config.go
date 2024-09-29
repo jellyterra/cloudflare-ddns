@@ -1,3 +1,6 @@
+// Copyright 2024 Jelly Terra
+// Use of this source code form is governed under the MIT license.
+
 package ddns
 
 import (

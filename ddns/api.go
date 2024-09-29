@@ -1,8 +1,12 @@
+// Copyright 2024 Jelly Terra
+// Use of this source code form is governed under the MIT license.
+
 package ddns
 
 import (
 	"context"
 	"github.com/cloudflare/cloudflare-go"
+	"log"
 	"net/netip"
 )
 
@@ -72,6 +76,8 @@ func UpdateRecord(ctx context.Context, zone *Zone, record *Record, addrs []netip
 				return err
 			}
 		}
+
+		log.Println("Update record:", record.Raw.Name, "=>", addr.String())
 	}
 
 	return nil

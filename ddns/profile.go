@@ -1,3 +1,6 @@
+// Copyright 2024 Jelly Terra
+// Use of this source code form is governed under the MIT license.
+
 package ddns
 
 import (
@@ -5,7 +8,7 @@ import (
 	"github.com/cloudflare/cloudflare-go"
 	"github.com/jellyterra/cloudflare-ddns/config"
 	"github.com/jellyterra/cloudflare-ddns/netif"
-	"github.com/jellyterra/collection-go"
+	"log"
 	"net/netip"
 	"regexp"
 	"sync"
@@ -40,7 +43,8 @@ func (f *NetIfAddrFilter) Filter() ([]netip.Addr, error) {
 
 	addrs, err := netif.GetNetIfAddrs(f.NetIfName)
 	if err != nil {
-		return nil, err
+		log.Println("Skipped interface", f.NetIfName, "due to:", err)
+		return nil, nil // Skip.
 	}
 
 	for _, addr := range addrs {
@@ -90,12 +94,8 @@ func (z *Zone) UpdateRecord(ctx context.Context, record *Record) error {
 	return UpdateRecord(ctx, z, record, allAddrs)
 }
 
-func (z *Zone) UpdateAll(ctx context.Context) (*ZoneUpdateReport, error) {
-	var (
-		recordReports collection.SyncVector[*RecordUpdateReport]
-
-		wg sync.WaitGroup
-	)
+func (z *Zone) UpdateAll(ctx context.Context) error {
+	var wg sync.WaitGroup
 
 	for _, record := range z.Records {
 		wg.Add(1)
@@ -104,43 +104,36 @@ func (z *Zone) UpdateAll(ctx context.Context) (*ZoneUpdateReport, error) {
 
 			err := z.UpdateRecord(ctx, record)
 			if err != nil {
-				recordReports.Push(&RecordUpdateReport{
-					Record: record,
-					Err:    err,
-				})
+				log.Println("Record", record.Raw.Name, "update failed:", err)
 			}
 		}()
 	}
 
 	wg.Wait()
 
-	return &ZoneUpdateReport{Zone: z, RecordUpdateReports: recordReports.It.Raw}, nil
+	return nil
 }
 
 type Env struct {
 	Zones []*Zone
 }
 
-func (e *Env) UpdateAllZones(ctx context.Context) (*EnvUpdateReport, error) {
-	var (
-		zoneReports collection.SyncVector[*ZoneUpdateReport]
-
-		wg sync.WaitGroup
-	)
+func (e *Env) UpdateAllZones(ctx context.Context) error {
+	var wg sync.WaitGroup
 
 	for _, zone := range e.Zones {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			report, err := zone.UpdateAll(ctx)
+			err := zone.UpdateAll(ctx)
 			if err != nil {
-				zoneReports.Push(report)
+				log.Println("Zone", zone.ZoneKey, "update failed:", err)
 			}
 		}()
 	}
 
 	wg.Wait()
 
-	return &EnvUpdateReport{ZoneUpdateReports: zoneReports.It.Raw}, nil
+	return nil
 }

@@ -1,4 +1,5 @@
 # Cloudflare Dynamic DNS
+
 Dynamic DNS records updater implemented via Cloudflare API.
 
 ## Features
@@ -28,10 +29,11 @@ $ go install github.com/jellyterra/cloudflare-ddns/cmd/cloudflare-ddns@latest
 | Key          | Value  | Description                                        |
 |--------------|--------|----------------------------------------------------|
 | `zone_id`    | String | Zone ID of the Cloudflare Site.                    |
-| `token`      | String | Cloudflare API token with accesses to the zone.    |
+| `api_token`  | String | Cloudflare API token with accesses to the zone.    |
 | `machine_id` | String | Machine ID, will be shown as comment on dashboard. |
 
 ### Record
+
 `[zones.(zoneName).records.(domainName)]`
 
 | Key       | Value  | Description         |
@@ -54,27 +56,43 @@ Glob specification can be found [here](https://pkg.go.dev/regexp/syntax).
 
 ### Example
 
-Example: `/etc/cloudflare-ddns.toml`
-```toml
-[zones.jellyterra]
-zone_id = ""
-token = ""
-machine_id = "spacemit-k1"
+Example: `/etc/cloudflare-ddns.yaml`
 
-[zones.jellyterra.records.k1]
-name = "k1.jellyterra.com"
-ttl = 60
-proxied = true
-
-[zones.jellyterra.records.k1.netif.wlp1s0.addr.ip4]
-ignore = [ "192.*" ]
-
-[zones.jellyterra.records.k1.netif.wlp1s0.addr.ip6]
-ignore = [ "fe.*" ]
+```yaml
+zones:
+  jellyterra: # Alias for identification.
+    zone_id: ""
+    api_token: ""
+    machine_id: "spacemit-k1" # Tagging the records. The program does not change record with mismatched tag.
+    records:
+      - name: "k1.jellyterra.com"
+        ttl: 60
+        proxied: true
+        netif:
+          wlp1s0: # Network interface name
+            addr:
+              ip4:
+                ignore:
+                  - "192.*"
+              ip6:
+                ignore:
+                  - "fe.*"
+          enp1s0:
+            addr:
+              ip4:
+                ignore:
+                  - "192.*"
+              ip6:
+                ignore:
+                  - "fe.*"
+  symboltics:
+    zone_id: ""
+    api_token: ""
+    # ...
 ```
 
 ## Run
 
 ```shell
-$ cloudflare-ddns -c /etc/cloudflare-ddns.toml
+$ cloudflare-ddns -c /etc/cloudflare-ddns.yaml
 ```

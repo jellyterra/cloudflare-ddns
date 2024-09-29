@@ -1,38 +1,41 @@
+// Copyright 2024 Jelly Terra
+// Use of this source code form is governed under the MIT license.
+
 package config
 
 type AddrFilterRule struct {
-	Ignore []string `toml:"ignore"`
+	Ignore []string `yaml:"ignore"`
 }
 
 type NetIfAddrFilter struct {
-	Ip4 *AddrFilterRule `toml:"ip4"`
-	Ip6 *AddrFilterRule `toml:"ip6"`
+	Ip4 *AddrFilterRule `yaml:"ip4"`
+	Ip6 *AddrFilterRule `yaml:"ip6"`
 }
 
 type NetIf struct {
-	Addr NetIfAddrFilter `toml:"addr"`
+	Addr NetIfAddrFilter `yaml:"addr"`
 }
 
 type Record struct {
-	Name    string `toml:"name"`
-	TTL     int    `toml:"ttl"`
-	Proxied bool   `toml:"proxied"`
+	Name    string `yaml:"name"`
+	TTL     int    `yaml:"ttl"`
+	Proxied bool   `yaml:"proxied"`
 
-	Comment string `toml:"comment"`
+	Comment string `yaml:"comment"`
 
-	NetIf map[string]*NetIf `toml:"netif"`
+	NetIf map[string]*NetIf `yaml:"netif"`
 }
 
 type Zone struct {
-	Token  string `toml:"token"`
-	ZoneID string `toml:"zone_id"`
+	Token  string `yaml:"api_token"`
+	ZoneID string `yaml:"zone_id"`
 
-	MachineID string `toml:"machine_id"`
-	Shared    bool   `toml:"shared"`
+	MachineID string `yaml:"machine_id"`
+	Shared    bool   `yaml:"shared"`
 
-	Records map[string]*Record `toml:"records"`
+	Records []*Record `yaml:"records"`
 }
 
 type File struct {
-	Zones map[string]*Zone `toml:"zones"`
+	Zones map[string]*Zone `yaml:"zones"`
 }

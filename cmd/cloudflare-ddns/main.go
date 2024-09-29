@@ -1,12 +1,15 @@
+// Copyright 2024 Jelly Terra
+// Use of this source code form is governed under the MIT license.
+
 package main
 
 import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"github.com/jellyterra/cloudflare-ddns/config"
 	"github.com/jellyterra/cloudflare-ddns/ddns"
+	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"sync/atomic"
@@ -24,7 +27,7 @@ func main() {
 
 func _main() error {
 	var (
-		optConfig = flag.String("c", "config.toml", "Path to config TOML file")
+		optConfig = flag.String("c", "config.yaml", "Path to config TOML file")
 
 		configFile config.File
 	)
@@ -36,7 +39,7 @@ func _main() error {
 		return err
 	}
 
-	err = toml.Unmarshal(b, &configFile)
+	err = yaml.Unmarshal(b, &configFile)
 	if err != nil {
 		return err
 	}
@@ -56,13 +59,11 @@ func _main() error {
 			// To keep the result latest, it must be set before the update.
 			haveToUpdate.Store(false)
 
-			report, err := env.UpdateAllZones(context.Background())
-
+			err := env.UpdateAllZones(context.Background())
 			if err != nil {
 				log.Println("Error updating DNS records:", err)
 			}
 
-			printEnvReport(report)
 			log.Println("All zones updated.")
 
 			for !haveToUpdate.Load() {
@@ -118,14 +119,6 @@ func notify(c chan<- struct{}) error {
 				c <- struct{}{}
 				break
 			}
-		}
-	}
-}
-
-func printEnvReport(report *ddns.EnvUpdateReport) {
-	for _, zoneReport := range report.ZoneUpdateReports {
-		for _, recordReport := range zoneReport.RecordUpdateReports {
-			log.Println(zoneReport.Zone.ZoneKey, recordReport.Record.Raw.Name, recordReport.Err)
 		}
 	}
 }
