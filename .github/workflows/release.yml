@@ -38,6 +38,7 @@ jobs:
           echo "Building target $GOOS/$GOARCH"
           go build -o ~/build/cloudflare-ddns-${{ github.ref_name }}-$GOOS-$GOARCH ./cmd/cloudflare-ddns
           done
+          echo
 
       - name: Compress via Zstd
         run: zstd ~/build/cloudflare-ddns-${{ github.ref_name }}-*
