@@ -1,13 +1,9 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
 name: Release
 
 on:
   push:
-    # Sequence of patterns matched against refs/tags
     tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'v*'
 
 permissions:
   contents: write
@@ -36,12 +32,11 @@ jobs:
           export GOOS=${TARGET[0]}
           export GOARCH=${TARGET[1]}
           echo "Building target $GOOS/$GOARCH"
-          go build -o ~/build/cloudflare-ddns-${{ github.ref_name }}-$GOOS-$GOARCH ./cmd/cloudflare-ddns
+          go build -o ~/build/${{ github.event.repository.name }}-${{ github.ref_name }}-$GOOS-$GOARCH .
           done
-          echo
 
       - name: Compress via Zstd
-        run: zstd ~/build/cloudflare-ddns-${{ github.ref_name }}-*
+        run: zstd ~/build/${{ github.event.repository.name }}-${{ github.ref_name }}-*
 
       - name: Generate Checksums
         run: sha256sum ~/build/*zst > ~/build/SHA256SUMS.txt
@@ -54,8 +49,8 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           release_name: ${{ github.ref_name }}
-          body: Changelog for ${{ github.ref_name }}
-          draft: true
+          body: RTMP Pioneer ${{ github.ref_name }}
+          draft: false
           prerelease: false
 
       - name: Upload Artifact
