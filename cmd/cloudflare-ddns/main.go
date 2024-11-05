@@ -10,7 +10,6 @@ import (
 	"github.com/jellyterra/cloudflare-ddns/config"
 	"github.com/jellyterra/cloudflare-ddns/ddns"
 	"gopkg.in/yaml.v3"
-	"log"
 	"os"
 	"sync/atomic"
 	"syscall"
@@ -61,10 +60,10 @@ func _main() error {
 
 			err := env.UpdateAllZones(context.Background())
 			if err != nil {
-				log.Println("Error updating DNS records:", err)
+				fmt.Println("Error updating DNS records:", err)
 			}
 
-			log.Println("All zones updated.")
+			fmt.Println("All zones updated.")
 
 			for !haveToUpdate.Load() {
 				time.Sleep(1 * time.Second)
@@ -76,13 +75,19 @@ func _main() error {
 		for {
 			select {
 			case <-notification:
-				log.Println("Network change detected.")
+				fmt.Println("Network change detected.")
 				haveToUpdate.Store(true)
 			}
 		}
 	}()
 
-	return notify(notification)
+	err = notify(notification)
+	if err != nil {
+		fmt.Println("Fallback to timer. Error occurred when listen NETLINK:", err)
+		timerNotify(notification)
+	}
+
+	return nil
 }
 
 func notify(c chan<- struct{}) error {
@@ -120,5 +125,12 @@ func notify(c chan<- struct{}) error {
 				break
 			}
 		}
+	}
+}
+
+func timerNotify(c chan<- struct{}) {
+	for {
+		c <- struct{}{}
+		time.Sleep(1 * time.Hour)
 	}
 }
